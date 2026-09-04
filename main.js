@@ -277,7 +277,7 @@
 
   // --- タイルクリック（ポチポチ選択/解除） ---
   function onTileClick(num, btn) {
-    if (state.isFeedbackShowing) return;
+    if (state.screen !== 'game' || state.timeLeft <= 0 || state.isFeedbackShowing) return;
 
     if (state.selectedNumbers.has(num)) {
       state.selectedNumbers.delete(num);
@@ -312,7 +312,7 @@
 
   // --- 全クリアボタン ---
   elBtnClear.addEventListener('click', () => {
-    if (state.isFeedbackShowing) return;
+    if (state.screen !== 'game' || state.timeLeft <= 0 || state.isFeedbackShowing) return;
     sounds.playClick();
     state.selectedNumbers.clear();
     const btns = elNumpadGrid.querySelectorAll('.tile-btn');
@@ -324,7 +324,7 @@
   elBtnSubmit.addEventListener('click', onSubmit);
 
   function onSubmit() {
-    if (state.isFeedbackShowing || state.screen !== 'game') return;
+    if (state.screen !== 'game' || state.timeLeft <= 0 || state.isFeedbackShowing) return;
 
     const target = state.currentQuestion.target;
     
@@ -405,11 +405,15 @@
     // フィードバック表示（1.2秒後に自動で次へ）
     showTemporaryFeedback(
       `🎉 PERFECT SPLASH!! +${gainedScore}点`,
-      `ナワバリ全ぬり完了！ ${target} の約数は <strong>${sortedDivisors}</strong>（ぜんぶで ${divisorsSet.size}こ）！`,
+      `全エリアぬり完了！ ${target} の約数は <strong>${sortedDivisors}</strong>（ぜんぶで ${divisorsSet.size}こ）！`,
       true,
       `インクが重なるペア： ${pairStrings}`,
       1300,
       () => {
+        if (state.timeLeft <= 0 || state.screen !== 'game') {
+          endGame();
+          return;
+        }
         nextQuestion();
       }
     );
@@ -425,13 +429,20 @@
     state.timeLeft = Math.max(0, state.timeLeft - 3);
     updateHeaderUI();
 
-    let titleMsg = '💥 WIPEOUT!!（-3秒）';
+    // ★ ペナルティで0秒になった場合は即座に強制終了！ ★
+    if (state.timeLeft <= 0) {
+      state.timeLeft = 0;
+      endGame();
+      return;
+    }
+
+    let titleMsg = '💥 OUT OF INK!!（-3秒）';
     let detailMsg = '';
     if (incorrect.length > 0) {
       const badNum = incorrect[0];
       const remainder = target % badNum;
       const quotient = Math.floor(target / badNum);
-      titleMsg = '💥 WIPEOUT!! あまりが出ちゃった！（-3秒）';
+      titleMsg = '💥 OUT OF INK!! あまりが出ちゃった！（-3秒）';
       detailMsg = `「${badNum}」でわるとあまりが出るぞ！（${target} ÷ ${badNum} ＝ ${quotient} あまり ${remainder}）`;
     } else if (missing.length > 0) {
       const missedNum = missing[0];
@@ -506,19 +517,28 @@
 
   // --- タイマー処理 ---
   function onTick() {
-    if (state.timeLeft > 0) {
-      state.timeLeft--;
+    if (state.screen !== 'game') {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      return;
+    }
+
+    state.timeLeft--;
+    if (state.timeLeft <= 0) {
+      state.timeLeft = 0;
       updateHeaderUI();
+      endGame();
+      return;
+    }
 
-      if (state.timeLeft <= 10) {
-        elTimeLeft.classList.add('time-warning');
-      } else {
-        elTimeLeft.classList.remove('time-warning');
-      }
+    updateHeaderUI();
 
-      if (state.timeLeft === 0) {
-        endGame();
-      }
+    if (state.timeLeft <= 10) {
+      elTimeLeft.classList.add('time-warning');
+    } else {
+      elTimeLeft.classList.remove('time-warning');
     }
   }
 
@@ -533,9 +553,20 @@
 
   // --- ゲーム終了（リザルト画面） ---
   function endGame() {
-    if (state.timerId) clearInterval(state.timerId);
-    if (state.feverTimerId) clearInterval(state.feverTimerId);
+    if (state.timerId) {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+    if (state.feverTimerId) {
+      clearInterval(state.feverTimerId);
+      state.feverTimerId = null;
+    }
     endFever();
+
+    // フィードバックポップアップや警告があれば確実に解除
+    elFeedbackOverlay.classList.remove('active');
+    state.isFeedbackShowing = false;
+    elTimeLeft.classList.remove('time-warning');
 
     sounds.playResult();
     triggerConfetti(80);
@@ -544,16 +575,16 @@
     elStatSolved.textContent = state.solvedCount;
     elStatMaxCombo.textContent = state.maxCombo;
 
-    // 称号・ランク判定
-    let rank = '🐙 インク見習いボーイ＆ガール';
+    // 称号・ランク判定（完全オリジナル・著作権クリーン）
+    let rank = '🖌️ インク見習いルーキー';
     if (state.score >= 4000) {
-      rank = '👑 伝説のイカした約数ウルトラマスター！';
+      rank = '👑 伝説のウルトラペイントマスター！';
     } else if (state.score >= 3000) {
-      rank = '🏆 カンスト級！ナワバリ全ぬりチャンプ';
+      rank = '🏆 カンスト級！全色ぬりつくしチャンプ';
     } else if (state.score >= 2000) {
-      rank = '⭐ イカした約数スプラッシャー！';
+      rank = '⭐ クールな約数スプラッシャー！';
     } else if (state.score >= 1000) {
-      rank = '🦑 ナワバリぬりぬりファイター！';
+      rank = '🎨 ペイントぬりぬりファイター！';
     }
     elResultRank.textContent = `称号: ${rank}`;
 
@@ -687,7 +718,7 @@
 
   // --- PCキーボード操作対応 ---
   window.addEventListener('keydown', (e) => {
-    if (state.screen !== 'game' || state.isFeedbackShowing) return;
+    if (state.screen !== 'game' || state.timeLeft <= 0 || state.isFeedbackShowing) return;
 
     if (e.key === 'Enter') {
       onSubmit();
