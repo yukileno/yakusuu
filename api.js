@@ -1,5 +1,6 @@
-// GASのWebアプリURL（スプレッドシートのコンテナバインドGAS）
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxJD9RhMiNdEWWV-3yCGWm4DbQ06q-qz5-utz20h-0pFokum1xw7nv1iHJIDnKK8axXJw/exec";
+// 統合GASバックエンドのWebアプリURL（公倍数・約数 共通スプレッドシート連携）
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzUWv4NrZrbapQfqZzLIhjDzDejNG3hhMbxU5wyDZ78vA2oYsADe2qNCWwQmUs5swpj/exec";
+const CURRENT_UNIT = "yakusuu"; // 本アプリの単元キー
 
 // モックフラグ (本番連携のため false)
 const USE_MOCK = false;
@@ -48,7 +49,8 @@ const api = {
       name: name,
       score: score,
       token: token || ("offline_" + Date.now()),
-      date: new Date().toLocaleString('ja-JP')
+      date: new Date().toLocaleString('ja-JP'),
+      unit: CURRENT_UNIT
     };
 
     // 常に端末ローカル記録も更新
@@ -72,6 +74,7 @@ const api = {
         },
         body: JSON.stringify({
           action: 'register',
+          unit: CURRENT_UNIT,
           name: item.name,
           score: item.score,
           token: item.token,
@@ -84,7 +87,7 @@ const api = {
         throw new Error(json.error || '登録失敗');
       }
 
-      // 今回の送信が成功したら、ついでに過去の未送信キューがあれば一括送信
+      // 今回の送信が成功したら、過去の未送信キューがあれば一括送信
       this.syncOfflineScores().catch(() => {});
       return json;
     } catch (err) {
@@ -112,6 +115,7 @@ const api = {
         },
         body: JSON.stringify({
           action: 'bulkRegister',
+          unit: CURRENT_UNIT,
           items: queue
         })
       });
@@ -132,21 +136,20 @@ const api = {
     return { synced: 0 };
   },
 
-  // ランキング取得
+  // ランキング取得（unit 指定）
   async getRanking() {
     if (USE_MOCK) {
       return new Promise(resolve => setTimeout(() => {
         resolve([
           { name: "はるき", score: 2800 },
           { name: "ゆい", score: 2450 },
-          { name: "れん", score: 1900 },
-          { name: "りこ", score: 1500 }
+          { name: "れん", score: 1900 }
         ]);
       }, 400));
     }
 
     try {
-      const res = await fetch(GAS_URL + "?action=getRanking");
+      const res = await fetch(`${GAS_URL}?action=getRanking&unit=${CURRENT_UNIT}`);
       const json = await res.json();
       if (json && json.success && Array.isArray(json.data)) {
         return json.data;
@@ -176,8 +179,7 @@ const api = {
       return raw ? JSON.parse(raw) : [
         { name: "はるき", score: 2800 },
         { name: "ゆい", score: 2450 },
-        { name: "れん", score: 1900 },
-        { name: "りこ", score: 1500 }
+        { name: "れん", score: 1900 }
       ];
     } catch (e) {
       return [];
@@ -187,7 +189,6 @@ const api = {
 
 // ネットワーク再接続時に自動で未送信スコアを同期
 window.addEventListener('online', () => {
-  console.log("ネットワーク復帰を検知しました。未送信スコアを同期します。");
   api.syncOfflineScores((count) => {
     if (window.showSyncNotification) {
       window.showSyncNotification(count);
