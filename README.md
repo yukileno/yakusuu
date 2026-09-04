@@ -5,7 +5,7 @@
 画面に並んだ1〜20等の数字ボタンをポチポチ選んで決定することで、「あまりなく割り切れる数（約数）」と「かけると元の数になるペア」の感覚を直感的に体得できます。
 
 ## 🌐 サイトURL
-- **GitHub Pages 公開URL**: （デプロイ完了後に記載）
+- **GitHub Pages 公開URL**: [https://yukileno.github.io/yakusuu/](https://yukileno.github.io/yakusuu/)
 
 ---
 
