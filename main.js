@@ -555,6 +555,18 @@
   // --- スコア保存 ---
   elBtnSaveScore.addEventListener('click', async () => {
     if (state.isSubmittingScore) return;
+
+    if (!navigator.onLine) {
+      sounds.playWrong();
+      elBtnSaveScore.textContent = '⚠️ オフラインのため登録できません';
+      elBtnSaveScore.style.background = '#C62828';
+      setTimeout(() => {
+        elBtnSaveScore.textContent = '🏆 ランキングに登録';
+        elBtnSaveScore.style.background = '';
+      }, 2500);
+      return;
+    }
+
     const name = elPlayerName.value.trim() || '名無しさん';
     localStorage.setItem('yakusuu_player_name', name);
 
@@ -564,22 +576,21 @@
     elBtnSaveScore.disabled = true;
 
     try {
-      const res = await api.registerScore(name, state.score, state.sessionToken);
-      if (res && res.offline) {
-        elBtnSaveScore.textContent = '✔ オフライン保存完了！';
-        showSyncToast(`✔ 端末に保存しました（次回接続時に自動送信）`);
-      } else {
-        elBtnSaveScore.textContent = '✔ ランキング登録完了！';
-      }
+      await api.registerScore(name, state.score, state.sessionToken);
+      elBtnSaveScore.textContent = '✔ ランキング登録完了！';
       setTimeout(() => {
         showRanking();
       }, 900);
     } catch (err) {
       console.error(err);
-      elBtnSaveScore.textContent = '✔ 端末に保存完了';
+      sounds.playWrong();
+      elBtnSaveScore.textContent = '⚠️ 通信エラー：登録できませんでした';
+      elBtnSaveScore.style.background = '#C62828';
       setTimeout(() => {
-        showRanking();
-      }, 900);
+        elBtnSaveScore.disabled = false;
+        elBtnSaveScore.textContent = '🏆 ランキングに登録';
+        elBtnSaveScore.style.background = '';
+      }, 2500);
     } finally {
       state.isSubmittingScore = false;
     }
@@ -594,6 +605,11 @@
   async function showRanking() {
     switchScreen('ranking');
     elRankingList.innerHTML = '<div style="text-align:center; padding:20px; color:#78909C;">ランキングを取得中...</div>';
+
+    if (!navigator.onLine) {
+      elRankingList.innerHTML = '<div style="text-align:center; padding:24px; color:#C62828; font-weight:700;">⚠️ 現在オフラインです。<br><span style="font-size:0.95rem; color:#546E7A;">インターネットに接続するとランキングが表示されます。</span></div>';
+      return;
+    }
 
     try {
       const list = await api.getRanking();
@@ -620,7 +636,7 @@
         elRankingList.appendChild(div);
       });
     } catch (err) {
-      elRankingList.innerHTML = '<div style="text-align:center; padding:20px; color:#C62828;">ランキングの取得に失敗しました。</div>';
+      elRankingList.innerHTML = '<div style="text-align:center; padding:20px; color:#C62828;">⚠️ ランキングの取得に失敗しました。<br><span style="font-size:0.9rem; color:#546E7A;">通信環境を確認してください。</span></div>';
     }
   }
 
@@ -670,29 +686,5 @@
       }
     }
   });
-
-  // --- トースト通知（オフライン同期など） ---
-  const elSyncToast = document.getElementById('sync-toast');
-  let toastTimer = null;
-  function showSyncToast(customMsg) {
-    if (!elSyncToast) return;
-    elSyncToast.textContent = customMsg;
-    elSyncToast.classList.add('show');
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      elSyncToast.classList.remove('show');
-    }, 3500);
-  }
-
-  window.showSyncNotification = function (count) {
-    showSyncToast(`☁️ 未送信スコア（${count}件）をスプレッドシートに送信しました！`);
-  };
-
-  // 起動時に未送信スコアがあれば自動で一括同期
-  setTimeout(() => {
-    api.syncOfflineScores((count) => {
-      window.showSyncNotification(count);
-    });
-  }, 1200);
 
 })();
