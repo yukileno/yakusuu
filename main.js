@@ -491,18 +491,32 @@
     elApp.classList.add('fever-mode');
     
     // 時間を5秒ボーナス追加
-    state.timeLeft = Math.min(99, state.timeLeft + 5);
+    if (state.timeLeft > 0 && state.screen === 'game') {
+      state.timeLeft = Math.min(99, state.timeLeft + 5);
+      updateHeaderUI();
+    }
 
     let feverSeconds = 12; // 12秒間フィーバー
-    if (state.feverTimerId) clearInterval(state.feverTimerId);
+    if (state.feverTimerId) {
+      clearInterval(state.feverTimerId);
+      state.feverTimerId = null;
+    }
 
     state.feverTimerId = setInterval(() => {
+      if (state.screen !== 'game' || state.timeLeft <= 0) {
+        clearInterval(state.feverTimerId);
+        state.feverTimerId = null;
+        endFever();
+        return;
+      }
+
       feverSeconds--;
       state.feverGauge = (feverSeconds / 12) * 100;
       elFeverBar.style.width = `${state.feverGauge}%`;
 
       if (feverSeconds <= 0) {
         clearInterval(state.feverTimerId);
+        state.feverTimerId = null;
         endFever();
       }
     }, 1000);
@@ -511,6 +525,10 @@
   function endFever() {
     state.isFever = false;
     state.feverGauge = 0;
+    if (state.feverTimerId) {
+      clearInterval(state.feverTimerId);
+      state.feverTimerId = null;
+    }
     elApp.classList.remove('fever-mode');
     updateHeaderUI();
   }

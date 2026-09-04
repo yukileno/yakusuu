@@ -74,20 +74,34 @@ body {
   z-index: 1;
 }
 
-/* フィーバーモード時の超ド派手エフェクト */
-#app-container.fever-mode {
-  animation: fever-splat-aura 0.7s infinite alternate;
+/* フィーバーモード時の超軽量・GPU高速画面オーバーレイ */
+.fever-screen-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  box-shadow: inset 0 0 50px rgba(255, 0, 127, 0.7), inset 0 0 100px rgba(250, 255, 0, 0.4);
+  transition: opacity 0.3s ease;
+  will-change: opacity;
 }
 
-@keyframes fever-splat-aura {
-  0% {
-    box-shadow: 0 0 45px rgba(250, 255, 0, 0.8), 0 0 85px rgba(255, 0, 127, 0.8);
-    filter: saturate(1.2) brightness(1.08);
-  }
-  100% {
-    box-shadow: 0 0 65px rgba(0, 255, 102, 0.9), 0 0 110px rgba(157, 0, 255, 0.9);
-    filter: saturate(1.4) brightness(1.18);
-  }
+#app-container.fever-mode {
+  border-color: var(--splat-yellow);
+  box-shadow: 0 0 35px rgba(250, 255, 0, 0.7), 0 0 70px rgba(255, 0, 127, 0.5);
+}
+
+#app-container.fever-mode .fever-screen-glow {
+  opacity: 1;
+  animation: fever-glow-pulse 0.6s infinite alternate ease-in-out;
+}
+
+@keyframes fever-glow-pulse {
+  0% { opacity: 0.35; }
+  100% { opacity: 0.85; }
 }
 
 /* パーティクルCanvas */
@@ -476,14 +490,8 @@ button {
 }
 
 #app-container.fever-mode .fever-bar-inner {
-  background: linear-gradient(90deg, #00FF66, #FAFF00, #FF007F, #00F0FF);
-  background-size: 200% 100%;
-  animation: rainbow-bar 0.8s infinite linear;
-}
-
-@keyframes rainbow-bar {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+  background: linear-gradient(90deg, #00FF66 0%, #FAFF00 50%, #FF007F 100%);
+  box-shadow: 0 0 16px rgba(250, 255, 0, 0.9);
 }
 
 .score-display {
