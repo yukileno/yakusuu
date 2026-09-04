@@ -564,17 +564,22 @@
     elBtnSaveScore.disabled = true;
 
     try {
-      await api.registerScore(name, state.score, state.sessionToken);
-      elBtnSaveScore.textContent = '✔ 登録完了！';
+      const res = await api.registerScore(name, state.score, state.sessionToken);
+      if (res && res.offline) {
+        elBtnSaveScore.textContent = '✔ オフライン保存完了！';
+        showSyncToast(`✔ 端末に保存しました（次回接続時に自動送信）`);
+      } else {
+        elBtnSaveScore.textContent = '✔ ランキング登録完了！';
+      }
       setTimeout(() => {
         showRanking();
-      }, 700);
+      }, 900);
     } catch (err) {
       console.error(err);
-      elBtnSaveScore.textContent = '登録完了（ローカル保存）';
+      elBtnSaveScore.textContent = '✔ 端末に保存完了';
       setTimeout(() => {
         showRanking();
-      }, 700);
+      }, 900);
     } finally {
       state.isSubmittingScore = false;
     }
@@ -665,5 +670,29 @@
       }
     }
   });
+
+  // --- トースト通知（オフライン同期など） ---
+  const elSyncToast = document.getElementById('sync-toast');
+  let toastTimer = null;
+  function showSyncToast(customMsg) {
+    if (!elSyncToast) return;
+    elSyncToast.textContent = customMsg;
+    elSyncToast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      elSyncToast.classList.remove('show');
+    }, 3500);
+  }
+
+  window.showSyncNotification = function (count) {
+    showSyncToast(`☁️ 未送信スコア（${count}件）をスプレッドシートに送信しました！`);
+  };
+
+  // 起動時に未送信スコアがあれば自動で一括同期
+  setTimeout(() => {
+    api.syncOfflineScores((count) => {
+      window.showSyncNotification(count);
+    });
+  }, 1200);
 
 })();
