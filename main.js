@@ -115,20 +115,21 @@
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  // --- 紙吹雪エフェクト ---
-  function triggerConfetti(count = 70) {
-    const colors = ['#FFD54F', '#FF4081', '#00E676', '#00E5FF', '#FF9100', '#E040FB'];
+  // --- スプラッシュインクエフェクト (Splatoon Ink Particles) ---
+  function triggerConfetti(count = 60) {
+    const colors = ['#00FF66', '#FF007F', '#FAFF00', '#00F0FF', '#9D00FF', '#FF6600'];
     for (let i = 0; i < count; i++) {
       confettiParticles.push({
-        x: canvas.width * 0.5 + (Math.random() - 0.5) * 200,
-        y: canvas.height * 0.4,
-        vx: (Math.random() - 0.5) * 14,
-        vy: (Math.random() - 0.8) * 12,
-        size: Math.random() * 9 + 5,
+        x: canvas.width * 0.5 + (Math.random() - 0.5) * 220,
+        y: canvas.height * 0.38,
+        vx: (Math.random() - 0.5) * 16,
+        vy: (Math.random() - 0.8) * 14,
+        size: Math.random() * 12 + 6,
         color: colors[Math.floor(Math.random() * colors.length)],
+        splatRatio: Math.random() * 0.4 + 0.8, // 雫の楕円比率
         rot: Math.random() * 360,
-        rotSpeed: (Math.random() - 0.5) * 15,
-        gravity: 0.35,
+        rotSpeed: (Math.random() - 0.5) * 12,
+        gravity: 0.38,
         alpha: 1
       });
     }
@@ -145,11 +146,11 @@
       p.x += p.vx;
       p.y += p.vy;
       p.vy += p.gravity;
-      p.vx *= 0.98;
+      p.vx *= 0.97;
       p.rot += p.rotSpeed;
-      p.alpha -= 0.015;
+      p.alpha -= 0.018;
 
-      if (p.alpha <= 0 || p.y > canvas.height + 20) {
+      if (p.alpha <= 0 || p.y > canvas.height + 25) {
         confettiParticles.splice(i, 1);
         continue;
       }
@@ -159,7 +160,18 @@
       ctx.rotate((p.rot * Math.PI) / 180);
       ctx.globalAlpha = p.alpha;
       ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+
+      // メインのインクしずく（丸）
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size, p.size * p.splatRatio, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // インクの飛び散り小粒（スプラトゥーン感）
+      ctx.beginPath();
+      ctx.arc(p.size * 1.3, -p.size * 0.5, p.size * 0.3, 0, Math.PI * 2);
+      ctx.arc(-p.size * 1.1, p.size * 0.6, p.size * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     }
 
@@ -392,10 +404,10 @@
 
     // フィードバック表示（1.2秒後に自動で次へ）
     showTemporaryFeedback(
-      `🎉 パーフェクト！ +${gainedScore}点`,
-      `${target} の約数は <strong>${sortedDivisors}</strong> の ${divisorsSet.size}こ！`,
+      `🎉 PERFECT SPLASH!! +${gainedScore}点`,
+      `ナワバリ全ぬり完了！ ${target} の約数は <strong>${sortedDivisors}</strong>（ぜんぶで ${divisorsSet.size}こ）！`,
       true,
-      `かけると ${target} になる組： ${pairStrings}`,
+      `インクが重なるペア： ${pairStrings}`,
       1300,
       () => {
         nextQuestion();
@@ -413,20 +425,23 @@
     state.timeLeft = Math.max(0, state.timeLeft - 3);
     updateHeaderUI();
 
+    let titleMsg = '💥 WIPEOUT!!（-3秒）';
     let detailMsg = '';
     if (incorrect.length > 0) {
       const badNum = incorrect[0];
       const remainder = target % badNum;
       const quotient = Math.floor(target / badNum);
-      detailMsg = `「${badNum}」はあまりが出るよ！（${target} ÷ ${badNum} ＝ ${quotient} あまり ${remainder}）`;
+      titleMsg = '💥 WIPEOUT!! あまりが出ちゃった！（-3秒）';
+      detailMsg = `「${badNum}」でわるとあまりが出るぞ！（${target} ÷ ${badNum} ＝ ${quotient} あまり ${remainder}）`;
     } else if (missing.length > 0) {
       const missedNum = missing[0];
       const partner = target / missedNum;
-      detailMsg = `まだあるよ！「${missedNum}」も ${target} の約数だよ！（${Math.min(missedNum, partner)} × ${Math.max(missedNum, partner)} ＝ ${target}）`;
+      titleMsg = '⚠️ INK SHORTAGE!! ぬり残しがあるぞ！（-3秒）';
+      detailMsg = `まだあるぞ！「${missedNum}」も ${target} の約数だ！（${Math.min(missedNum, partner)} × ${Math.max(missedNum, partner)} ＝ ${target}）`;
     }
 
     showTemporaryFeedback(
-      `⚡ おしい！ まちがいがあるよ（-3秒）`,
+      titleMsg,
       detailMsg,
       false,
       null,
@@ -530,15 +545,15 @@
     elStatMaxCombo.textContent = state.maxCombo;
 
     // 称号・ランク判定
-    let rank = '約数見習い';
+    let rank = '🐙 インク見習いボーイ＆ガール';
     if (state.score >= 4000) {
-      rank = '👑 神レベル！ 約数の大魔導士';
+      rank = '👑 伝説のイカした約数ウルトラマスター！';
     } else if (state.score >= 3000) {
-      rank = '🏆 素晴らしい！ まるつけマスター';
+      rank = '🏆 カンスト級！ナワバリ全ぬりチャンプ';
     } else if (state.score >= 2000) {
-      rank = '⭐ お見事！ 約数の達人';
+      rank = '⭐ イカした約数スプラッシャー！';
     } else if (state.score >= 1000) {
-      rank = '👍 よくできたね！ 約数ハンター';
+      rank = '🦑 ナワバリぬりぬりファイター！';
     }
     elResultRank.textContent = `称号: ${rank}`;
 

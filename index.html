@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ポチポチ約数ハンター 〜まるつけマスター〜</title>
+  <title>ポチポチ約数スプラッシュ！ 〜まるつけバトル〜</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,23 +11,46 @@
 </head>
 <body>
   <div id="app-container">
+    <div class="bg-splat-overlay"></div>
     <canvas id="confetti-canvas"></canvas>
     <button id="btn-sound-toggle" class="sound-toggle" aria-label="音の切り替え">🔊</button>
 
     <!-- 1. タイトル画面 -->
     <div id="screen-title" class="screen active">
-      <div class="title-badge">★ 小学校5年生 算数「約数と公約数」 ★</div>
-      <h1 class="main-title">ポチポチ約数ハンター</h1>
-      <p class="title-sub">〜 まるつけマスターを めざそう！ 〜</p>
+      <div class="title-container">
+        <!-- 左側：スプラトゥーン風マスコットキャラクター -->
+        <div class="title-mascot-container">
+          <div class="mascot-frame">
+            <img src="assets/mascot.jpg" alt="イカガール マスコット" class="title-mascot-img">
+            <div class="mascot-sticker-tag">INK & SPLAT!</div>
+          </div>
+        </div>
 
-      <div class="rule-box">
-        お題の数を <span class="highlight">「あまりなしで わり切れる数（約数）」</span> をすべてポチポチ選んで決定しよう！<br>
-        「かけると元の数になるペア」を見つけるのがコツだよ！
-      </div>
+        <!-- 右側：タイトル＆スタートメニュー -->
+        <div class="title-main-container">
+          <div class="title-badge">★ ナワバリ算数バトル！ 小5「約数と公約数」 ★</div>
+          <h1 class="main-title">
+            <span class="title-part-green">ポチポチ</span>
+            <span class="title-part-yellow">約数</span>
+            <span class="title-part-pink">スプラッシュ！</span>
+          </h1>
+          <p class="title-sub">〜 インクをぬりまくって まるつけマスター！ 〜</p>
 
-      <div class="title-actions">
-        <button id="btn-start" class="btn-start">▶ スタート！（90秒）</button>
-        <button id="btn-ranking-view" class="btn-ranking-title">🏆 ランキング</button>
+          <div class="rule-box">
+            <div class="rule-title">🎮 バトルのルール</div>
+            お題の数を <span class="highlight-green">「あまりなしで わり切れる数（約数）」</span> をすべてポチポチ選んでインクを塗ろう！<br>
+            <span class="highlight-yellow">「かけると元の数になるペア」</span> を見つけるのがハイスコアのヒケツだ！
+          </div>
+
+          <div class="title-actions">
+            <button id="btn-start" class="btn-start">
+              <span class="btn-icon">⚡</span> バトルスタート！（90秒）
+            </button>
+            <button id="btn-ranking-view" class="btn-ranking-title">
+              <span class="btn-icon">🏆</span> ハイスコア
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -35,58 +58,67 @@
     <div id="screen-game" class="screen">
       <!-- ヘッダー -->
       <div class="game-header">
-        <div class="header-item">
-          <span class="header-label">のこり時間</span>
-          <span id="time-left" class="header-val">90</span><span style="font-size:0.9rem; font-weight:700; color:#546E7A;">秒</span>
+        <div class="header-item timer-box">
+          <span class="header-label">TIME</span>
+          <div class="timer-val-wrap">
+            <span id="time-left" class="header-val">90</span><span class="unit-sec">秒</span>
+          </div>
         </div>
 
         <div class="fever-wrapper" id="fever-box">
-          <div class="fever-title">⚡ FEVER GAUGE</div>
+          <div class="fever-header-wrap">
+            <span class="fever-icon">⚡</span>
+            <span class="fever-title">SPECIAL GAUGE</span>
+          </div>
           <div class="fever-bar-outer">
             <div id="fever-bar" class="fever-bar-inner"></div>
           </div>
         </div>
 
-        <div class="header-item">
-          <span class="header-label">スコア</span>
+        <div class="header-item score-box">
+          <span class="header-label">SCORE</span>
           <span id="score" class="header-val score-display">0</span>
         </div>
       </div>
 
-      <div id="combo-badge" class="combo-badge">🔥 <span id="combo-count">2</span> COMBO!</div>
+      <div id="combo-badge" class="combo-badge">🔥 <span id="combo-count">2</span> SQUID COMBO!</div>
 
       <!-- お題パネル -->
       <div class="question-panel">
         <div class="question-text-wrap">
-          <span class="target-badge">お題の数</span>
+          <span class="target-badge">🎯 TARGET</span>
           <span id="target-number" class="target-number">12</span>
-          <span style="font-size:1.2rem; font-weight:900; color:#37474F;">の やくすうを ぜんぶ選ぼう！</span>
+          <span class="question-instruction">の 約数をぜんぶ インクでぬれ！</span>
         </div>
 
         <div class="selected-tray">
-          <span class="tray-label">えらんだ数:</span>
+          <span class="tray-label">ぬった数:</span>
           <div id="tray-chips" class="tray-chips">
-            <span style="color:#90A4AE; font-size:0.95rem;">（ボタンを押してね）</span>
+            <span class="tray-placeholder">（タイルをポチポチ選んでね）</span>
           </div>
         </div>
       </div>
 
       <!-- 数字タイルボタングリッド (1〜20) -->
       <div id="numpad-grid" class="numpad-container">
-        <!-- JSで1〜20等のボタンを生成 -->
+        <!-- JSでボタン生成 -->
       </div>
 
       <!-- アクションバー -->
       <div class="action-bar">
-        <button id="btn-clear" class="btn-clear">ぜんぶ消す ✕</button>
-        <button id="btn-submit" class="btn-submit">けってい ✔</button>
+        <button id="btn-clear" class="btn-clear">
+          <span>✕</span> ぬり直し
+        </button>
+        <button id="btn-submit" class="btn-submit">
+          <span>✔</span> ぬり決定（まるつけ）！
+        </button>
       </div>
     </div>
 
     <!-- 判定フィードバック用ポップアップ -->
     <div id="feedback-overlay" class="feedback-overlay">
       <div class="feedback-card">
-        <h2 id="feedback-title" class="feedback-title correct">🎉 パーフェクト！</h2>
+        <h2 id="feedback-title" class="feedback-title correct">🎉 PERFECT SPLASH!!</h2>
         <p id="feedback-detail" class="feedback-detail">12の約数は 1, 2, 3, 4, 6, 12 の 6こ！</p>
         <div id="feedback-pair" class="pair-box">
           かけると12になるペア： 1×12, 2×6, 3×4
@@ -97,26 +129,38 @@
     <!-- 3. リザルト画面 -->
     <div id="screen-result" class="screen">
       <div class="result-card">
-        <h2 class="result-title">タイムアップ！ おつかれさま！</h2>
-        <div class="result-score-box">
-          <div style="font-size:1rem; color:#546E7A; font-weight:700;">あなたのスコア</div>
-          <div id="final-score" class="result-score-val">0</div>
-        </div>
+        <div class="result-layout">
+          <!-- 左側：勝利マスコット -->
+          <div class="result-mascot-container">
+            <img src="assets/victory.jpg" alt="勝利のイカボーイ" class="result-mascot-img">
+            <div class="result-badge-tag">CHAMPION!</div>
+          </div>
 
-        <div class="result-stats">
-          <div>正解数: <span id="stat-solved" style="color:#2E7D32; font-weight:900;">0</span> 問</div>
-          <div>最大コンボ: <span id="stat-max-combo" style="color:#E65100; font-weight:900;">0</span></div>
-        </div>
+          <!-- 右側：結果詳細 -->
+          <div class="result-content-container">
+            <h2 class="result-title">BATTLE FINISHED!!</h2>
+            
+            <div class="result-score-box">
+              <div class="result-score-label">TOTAL SCORE</div>
+              <div id="final-score" class="result-score-val">0</div>
+            </div>
 
-        <div id="result-rank" class="result-rank-badge">称号: 約数マスター</div>
+            <div class="result-stats">
+              <div class="stat-pill">正解: <span id="stat-solved">0</span> 問</div>
+              <div class="stat-pill">MAXコンボ: <span id="stat-max-combo">0</span></div>
+            </div>
 
-        <div>
-          <input type="text" id="player-name" class="input-name" placeholder="なまえ（ニックネーム）" maxlength="10">
-        </div>
+            <div id="result-rank" class="result-rank-badge">称号: 伝説のイカした約数マスター！</div>
 
-        <div class="result-actions">
-          <button id="btn-save-score" class="btn-submit-score">🏆 ランキングに登録</button>
-          <button id="btn-retry" class="btn-retry">もういちど遊ぶ ↻</button>
+            <div class="name-entry-wrap">
+              <input type="text" id="player-name" class="input-name" placeholder="なまえ（ニックネーム）" maxlength="10">
+            </div>
+
+            <div class="result-actions">
+              <button id="btn-save-score" class="btn-submit-score">🏆 ランキングに登録</button>
+              <button id="btn-retry" class="btn-retry">もういちどバトル ↻</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -124,9 +168,12 @@
     <!-- 4. ランキング画面 -->
     <div id="screen-ranking" class="screen">
       <div class="ranking-card">
-        <h2 class="ranking-title">🏆 ハイスコアランキング 🏆</h2>
+        <div class="ranking-header">
+          <img src="assets/badge.jpg" class="ranking-badge-icon" alt="badge">
+          <h2 class="ranking-title">🏆 イカしたハイスコアランキング 🏆</h2>
+        </div>
         <div id="ranking-list" class="ranking-list">
-          <div style="text-align:center; padding:20px; color:#78909C;">読み込み中...</div>
+          <div style="text-align:center; padding:20px; color:#A0AEC0;">読み込み中...</div>
         </div>
         <button id="btn-back-ranking" class="btn-back">◀ もどる</button>
       </div>

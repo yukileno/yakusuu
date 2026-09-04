@@ -20,21 +20,22 @@ class SoundEffectManager {
     return this.muted;
   }
 
-  // ボタンタップ音（ポチッ）
+  // ボタンタップ音（インクスプラッシュ・ピチャッ！）
   playClick() {
     if (this.muted) return;
     this.init();
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(520, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(780, this.ctx.currentTime + 0.04);
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+    osc.frequency.setValueAtTime(680, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.03);
+    osc.frequency.exponentialRampToValueAtTime(450, this.ctx.currentTime + 0.06);
+    gain.gain.setValueAtTime(0.24, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.04);
+    osc.stop(this.ctx.currentTime + 0.06);
   }
 
   // 数字選択解除音（ポコン）
