@@ -1,5 +1,5 @@
-// GASのWebアプリURL
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxxFBzigYXv2_xGglDOOthoHVXhQzxth1gCn9UocqIy4Owum8y7o7rqp5vCoaUdBRM2/exec";
+// GASのWebアプリURL（スプレッドシートのコンテナバインドGAS）
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxJD9RhMiNdEWWV-3yCGWm4DbQ06q-qz5-utz20h-0pFokum1xw7nv1iHJIDnKK8axXJw/exec";
 
 // モックフラグ (本番連携のため false)
 const USE_MOCK = false;
